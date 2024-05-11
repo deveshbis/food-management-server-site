@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.Port || 5000;
 
@@ -62,7 +62,105 @@ async function run() {
       res.send(result);
   });
 
+  app.delete('/deleteData/:id', async (req, res) => {
+    const id = req.params.id;
+    const query = { _id: new ObjectId(id) };
+    const result = await userCollection.deleteOne(query);
+    res.send(result);
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  //sort
+  app.get('/userData', async (req, res) => {
+    const size = parseInt(req.query.size)
+    const page = parseInt(req.query.page) - 1
+    const filter = req.query.filter
+    const sort = req.query.sort
+    const search = req.query.search
+    console.log(size, page)
+
+    let query = {
+      card_title: { $regex: search, $options: 'i' },
+    }
+    if (filter) query.category = filter
+    let options = {}
+    if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } }
+    const result = await userCollection
+      .find(query, options)
+      .skip(page * size)
+      .limit(size)
+      .toArray()
+
+    res.send(result)
+  })
+
+
+
+  // app.get('/userData', async (req, res) => {
+  //   const { sort, search } = req.query;
+    
+  //   try {
+  //     let query = {
+  //       job_title: { $regex: search, $options: 'i' },
+  //     };
+      
+  //     let options = {};
+  //     if (sort) {
+  //       options.sort = { expiredDate: sort === 'asc' ? 1 : -1 };
+  //     }
+      
+  //     const userData = await User.find(query, null, options);
+  //     res.json(userData);
+  //   } catch (error) {
+  //     console.error('Error fetching user data:', error);
+  //     res.status(500).json({ error: 'Internal server error' });
+  //   }
+  // });
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -74,10 +172,6 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-// PLlcz8ls6pR7txqP
-// foodsMaster
 
 app.get('/', (req, res) => {
     res.send('Hello from Foods Server....')
