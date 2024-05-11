@@ -61,6 +61,24 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
   });
+  app.put('/updateData/:id', async (req, res) => {
+    const id = req.params.id;
+    const filter = { _id: new ObjectId(id) }
+    const options = { upsert: true };
+    const updatedFood = req.body;
+
+    const tourSpot = {
+        $set: {
+            foodImage: updatedFood.foodImage,
+            foodName: updatedFood.foodName,
+            foodQuantity: updatedFood.foodQuantity,
+            expiredDate: updatedFood.expiredDate,
+           
+        }
+    }
+    const result = await userCollection.updateOne(filter, tourSpot, options);
+    res.send(result);
+})
 
   app.delete('/deleteData/:id', async (req, res) => {
     const id = req.params.id;
