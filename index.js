@@ -49,58 +49,60 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const result = await featuredFoodsCollection.findOne(query);
       res.send(result);
-  })
+    })
 
     //user Data
 
     const userCollection = client.db('fooddb').collection('userData');
 
+    //opern korte hobe must
+
     app.get('/userData', async (req, res) => {
       const cursor = userCollection.find();
       const result = await cursor.toArray();
       res.send(result);
-  })
+    })
 
     app.post('/userData', async (req, res) => {
       const user = req.body;
       console.log(user);
       const result = await userCollection.insertOne(user);
       res.send(result);
-  });
-  app.put('/updateData/:id', async (req, res) => {
-    const id = req.params.id;
-    const filter = { _id: new ObjectId(id) }
-    const options = { upsert: true };
-    const updatedFood = req.body;
+    });
 
-    const tourSpot = {
+
+    app.put('/updateData/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) }
+      const options = { upsert: true };
+      const updatedFood = req.body;
+
+      const tourSpot = {
         $set: {
-            foodImage: updatedFood.foodImage,
-            foodName: updatedFood.foodName,
-            foodQuantity: updatedFood.foodQuantity,
-            expiredDate: updatedFood.expiredDate,
-           
+          foodImage: updatedFood.foodImage,
+          foodName: updatedFood.foodName,
+          foodQuantity: updatedFood.foodQuantity,
+          expiredDate: updatedFood.expiredDate,
+
         }
-    }
-    const result = await userCollection.updateOne(filter, tourSpot, options);
-    res.send(result);
-})
+      }
+      const result = await userCollection.updateOne(filter, tourSpot, options);
+      res.send(result);
+    })
 
-  app.delete('/deleteData/:id', async (req, res) => {
-    const id = req.params.id;
-    const query = { _id: new ObjectId(id) };
-    const result = await userCollection.deleteOne(query);
-    res.send(result);
-})
+    app.delete('/deleteData/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    })
 
-app.get('/availableSingleFoodDetails/:id', async (req, res) => {
-  const id = req.params.id;
-  const query = { _id: new ObjectId(id) }
-  const result = await userCollection.findOne(query);
-  res.send(result);
-})
-
-
+    app.get('/availableSingleFoodDetails/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.findOne(query);
+      res.send(result);
+    })
 
 
 
@@ -123,64 +125,62 @@ app.get('/availableSingleFoodDetails/:id', async (req, res) => {
 
 
 
-  //sort
-  app.get('/userData', async (req, res) => {
-    const size = parseInt(req.query.size)
-    const page = parseInt(req.query.page) - 1
-    const filter = req.query.filter
-    const sort = req.query.sort
-    const search = req.query.search
-    console.log(size, page)
-
-    let query = {
-      card_title: { $regex: search, $options: 'i' },
-    }
-    if (filter) query.category = filter
-    let options = {}
-    if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } }
-    const result = await userCollection
-      .find(query, options)
-      .skip(page * size)
-      .limit(size)
-      .toArray()
-
-    res.send(result)
-  })
 
 
 
-  // app.get('/userData', async (req, res) => {
-  //   const { sort, search } = req.query;
-    
-  //   try {
-  //     let query = {
-  //       job_title: { $regex: search, $options: 'i' },
-  //     };
-      
-  //     let options = {};
-  //     if (sort) {
-  //       options.sort = { expiredDate: sort === 'asc' ? 1 : -1 };
-  //     }
-      
-  //     const userData = await User.find(query, null, options);
-  //     res.json(userData);
-  //   } catch (error) {
-  //     console.error('Error fetching user data:', error);
-  //     res.status(500).json({ error: 'Internal server error' });
-  //   }
-  // });
- 
+    //sort
+    app.get('/userData', async (req, res) => {
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page) - 1;
+      const filter = req.query.filter;
+      const sort = req.query.sort;
+      const search = req.query.search;
+
+      let query = {};
+      if (search) {
+        query = {
+          $or: [
+            { foodName: { $regex: search, $options: 'i' } },
+            { additionalNotes: { $regex: search, $options: 'i' } },
+          ]
+        };
+      }
+      if (filter) query.category = filter;
+      let options = {};
+      if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } };
+
+      const result = await userCollection
+        .find(query, options)
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+
+      res.send(result);
+    });
 
 
 
 
+    // app.get('/userData', async (req, res) => {
+    //   const { sort, search } = req.query;
 
+    //   try {
+    //     let query = {
+    //       job_title: { $regex: search, $options: 'i' },
+    //     };
 
+    //     let options = {};
+    //     if (sort) {
+    //       options.sort = { expiredDate: sort === 'asc' ? 1 : -1 };
+    //     }
 
-
-
-
-
+    //     const userData = await User.find(query, null, options);
+    //     res.json(userData);
+    //   } catch (error) {
+    //     console.error('Error fetching user data:', error);
+    //     res.status(500).json({ error: 'Internal server error' });
+    //   }
+    // });
 
 
 
@@ -190,11 +190,37 @@ app.get('/availableSingleFoodDetails/:id', async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+    //request Data
+    const reqCollection = client.db('fooddb').collection('reqData');
+
+    app.post('/reqData', async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await reqCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get('/reqData', async (req, res) => {
+      const cursor = reqCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
 
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
@@ -205,6 +231,6 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Hello from Foods Server....')
-  })
+  res.send('Hello from Foods Server....')
+})
 app.listen(port, () => console.log(`Server running on port ${port}`))
