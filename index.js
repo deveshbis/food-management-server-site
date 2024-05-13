@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 const port = process.env.Port || 5000;
@@ -8,8 +10,19 @@ const port = process.env.Port || 5000;
 const app = express()
 
 // middleware
-app.use(cors());
-app.use(express.json());
+// app.use(cors());
+// app.use(express.json());
+const corsOptions = {
+  origin: [
+    'http://localhost:5173',
+    'https://foods-master-487ce.web.app',
+  ],
+  credentials: true,
+  optionSuccessStatus: 200,
+}
+app.use(cors(corsOptions))
+app.use(express.json())
+app.use(cookieParser())
 
 
 
@@ -29,6 +42,49 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
+
+
+
+
+    //jwt
+
+    app.post('/jwt', async (req, res) => {
+      const user = req.body
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: '365d',
+      })
+      res
+        .cookie('token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+        })
+        .send({ success: true })
+    })
+
+    app.get('/logout', (req, res) => {
+      res
+        .clearCookie('token', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+          maxAge: 0,
+        })
+        .send({ success: true })
+    })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const featuredFoodsCollection = client.db('fooddb').collection('featuredFoods')
 
@@ -62,6 +118,19 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     })
+
+    //optional
+    // app.get('/userData/:email', async (req, res) => {
+    //   // const tokenEmail = req.user.email
+    //   const email = req.params.email
+    //   // if (tokenEmail !== email) {
+    //   //   return res.status(403).send({ message: 'forbidden access' })
+    //   // }
+    //   const query = { 'postOwner.email': email }
+    //   const result = await userCollection.find(query).toArray()
+    //   res.send(result)
+    // })
+
 
     app.post('/userData', async (req, res) => {
       const user = req.body;
@@ -128,59 +197,20 @@ async function run() {
 
 
 
-    //sort
+    // Get all jobs data from db for sorting and search
     app.get('/userData', async (req, res) => {
-      const size = parseInt(req.query.size);
-      const page = parseInt(req.query.page) - 1;
-      const filter = req.query.filter;
-      const sort = req.query.sort;
-      const search = req.query.search;
-
-      let query = {};
-      if (search) {
-        query = {
-          $or: [
-            { foodName: { $regex: search, $options: 'i' } },
-            { additionalNotes: { $regex: search, $options: 'i' } },
-          ]
-        };
+      const sort = req.query.sort
+      const search = req.query.search
+      let query = {
+        foodName: { $regex: search, $options: 'i' },
       }
-      if (filter) query.category = filter;
-      let options = {};
-      if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } };
+      let options = {}
+      if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } }
+      const result = await userCollection.find(query, options).toArray()
 
-      const result = await userCollection
-        .find(query, options)
-        .skip(page * size)
-        .limit(size)
-        .toArray();
+      res.send(result)
+    })
 
-      res.send(result);
-    });
-
-
-
-
-    // app.get('/userData', async (req, res) => {
-    //   const { sort, search } = req.query;
-
-    //   try {
-    //     let query = {
-    //       job_title: { $regex: search, $options: 'i' },
-    //     };
-
-    //     let options = {};
-    //     if (sort) {
-    //       options.sort = { expiredDate: sort === 'asc' ? 1 : -1 };
-    //     }
-
-    //     const userData = await User.find(query, null, options);
-    //     res.json(userData);
-    //   } catch (error) {
-    //     console.error('Error fetching user data:', error);
-    //     res.status(500).json({ error: 'Internal server error' });
-    //   }
-    // });
 
 
 
