@@ -24,7 +24,23 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(cookieParser())
 
+// verify jwt middleware
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token
+  if (!token) return res.status(401).send({ message: 'unauthorized access' })
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(err)
+        return res.status(401).send({ message: 'unauthorized access' })
+      }
+      console.log(decoded)
 
+      req.user = decoded
+      next()
+    })
+  }
+}
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.95g0ypv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -78,12 +94,7 @@ async function run() {
 
 
 
-
-
-
-
-
-
+//featuredFoods
 
 
     const featuredFoodsCollection = client.db('fooddb').collection('featuredFoods')
@@ -107,29 +118,30 @@ async function run() {
       res.send(result);
     })
 
+
+
+
+
+
+
+
+
+
     //user Data
 
     const userCollection = client.db('fooddb').collection('userData');
 
-    //opern korte hobe must
 
-    app.get('/userData', async (req, res) => {
-      const cursor = userCollection.find();
-      const result = await cursor.toArray();
-      res.send(result);
+    app.get('/userData/:email', verifyToken, async (req, res) => {
+      const tokenEmail = req.user.email
+      const email = req.params.email
+      if (tokenEmail !== email) {
+        return res.status(403).send({ message: 'forbidden access' })
+      }
+      const query = { 'postOwner.email': email }
+      const result = await userCollection.find(query).toArray()
+      res.send(result)
     })
-
-    //optional
-    // app.get('/userData/:email', async (req, res) => {
-    //   // const tokenEmail = req.user.email
-    //   const email = req.params.email
-    //   // if (tokenEmail !== email) {
-    //   //   return res.status(403).send({ message: 'forbidden access' })
-    //   // }
-    //   const query = { 'postOwner.email': email }
-    //   const result = await userCollection.find(query).toArray()
-    //   res.send(result)
-    // })
 
 
     app.post('/userData', async (req, res) => {
@@ -202,7 +214,7 @@ async function run() {
       const sort = req.query.sort
       const search = req.query.search
       let query = {
-        foodName: { $regex: search, $options: 'i' },
+        // foodName: { $regex: search, $options: 'i' },
       }
       let options = {}
       if (sort) options = { sort: { expiredDate: sort === 'asc' ? 1 : -1 } }
