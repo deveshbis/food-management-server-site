@@ -131,6 +131,11 @@ async function run() {
 
     const userCollection = client.db('fooddb').collection('userData');
 
+    app.get('/userData', async (req, res) => {
+      const cursor = reqCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    })
 
     app.get('/userData/:email', verifyToken, async (req, res) => {
       const tokenEmail = req.user.email
@@ -152,13 +157,22 @@ async function run() {
     });
 
 
-    app.put('/updateData/:id', verifyToken, async (req, res) => {
+    app.get('/updateData/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await userCollection.findOne(query);
+      res.send(result);
+  })
+
+
+
+    app.put('/updateData/:id',  async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true };
       const updatedFood = req.body;
 
-      const tourSpot = {
+      const food = {
         $set: {
           foodImage: updatedFood.foodImage,
           foodName: updatedFood.foodName,
@@ -167,7 +181,7 @@ async function run() {
 
         }
       }
-      const result = await userCollection.updateOne(filter, tourSpot, options);
+      const result = await userCollection.updateOne(filter, food, options);
       res.send(result);
     })
 
