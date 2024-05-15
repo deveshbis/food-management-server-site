@@ -152,7 +152,7 @@ async function run() {
     });
 
 
-    app.put('/updateData/:id', async (req, res) => {
+    app.put('/updateData/:id', verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) }
       const options = { upsert: true };
@@ -252,6 +252,13 @@ async function run() {
       const result = await reqCollection.insertOne(user);
       res.send(result);
     });
+
+    app.get('/reqData/:email', verifyToken, async (req, res) => {
+      const email = req.params.email
+      const query = { 'postOwner.email': email }
+      const result = await reqCollection.find(query).toArray()
+      res.send(result)
+    })
 
     app.get('/reqData', async (req, res) => {
       const cursor = reqCollection.find();
