@@ -178,6 +178,8 @@ async function run() {
           foodName: updatedFood.foodName,
           foodQuantity: updatedFood.foodQuantity,
           expiredDate: updatedFood.expiredDate,
+          pickupLocation: updatedFood.pickupLocation,
+          additionalNotes: updatedFood.additionalNotes
 
         }
       }
@@ -198,25 +200,6 @@ async function run() {
       const result = await userCollection.findOne(query);
       res.send(result);
     })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
